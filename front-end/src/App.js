@@ -44,15 +44,26 @@ class App extends Component {
       imageUrl:'', //parameter to keep the image URL to display it, starting froma an empty state
       box: {}, // an object to keep the coordinates of the face in the image, starting from an empty state
       route: 'signIn', //the App should start from the signIn page
-      isSignedIn: false
+      isSignedIn: false,
+      user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: ''
+      }
     }
   }
-/*// look for definition
-  componentDidMount(){
-    fetch('http://localhost:3000')
-       .then(response => response.json())
-       .then(data =>console.log(data))
-  }*/
+
+ loadUser = (data)=>{
+   this.setState({user: {
+       id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined
+   }})
+ }
   
   changeInputState = (event)=>{
      this.setState({input: event.target.value});
@@ -79,14 +90,29 @@ class App extends Component {
   }
   
   // Communication with the clarifai API on button submit
-  onButtonSubmit = () =>{
+  onPictureSubmit = () =>{
     this.setState({imageUrl:this.state.input});
     app.models.predict(
       Clarifai.FACE_DETECT_MODEL, 
       this.state.input)
-    .then(response => this.displayFaceBox(this.returnFaceLocation(response)))
+    .then(response => {
+      if(response){
+        fetch('http://localhost:3000/image', {
+          method: 'put',
+          headers: {'Content-Type' : 'application/json'},
+          body: JSON.stringify({
+            id: this.state.user.id
+        })
+      })
+        .then(response => response.json())
+        .then(rank => {
+          this.setState(Object.assign(this.state.user, { entries: rank}))
+        })
+    }
+    this.displayFaceBox(this.returnFaceLocation(response))
+  })
     .catch(err => console.log(err));
-  }
+}
 
   onRouteChange = (route)=>{
     if(route ==='signIn'){
@@ -106,15 +132,15 @@ class App extends Component {
         { this.state.route === 'home'
            ?<div>
                <Logo/>
-               <Rank/>
+               <Rank name={this.state.user.name} entries={this.state.user.entries}/>
                <ImageLinkForm 
                   changeInputState={this.changeInputState} 
-                  onButtonSubmit={this.onButtonSubmit}/>
+                  onPictureSubmit={this.onPictureSubmit}/>
                <ImageDisplay box={this.state.box} imageUrl={this.state.imageUrl}/>
             </div>
            :( this.state.route === 'signIn'
-            ?<SignIn onRouteChange={this.onRouteChange}/>
-            :<SignUp onRouteChange={this.onRouteChange}/>
+            ?<SignIn loadUser={this.loadUser} onRouteChange={this.onRouteChange}/>
+            :<SignUp loadUser={this.loadUser} onRouteChange={this.onRouteChange}/>
             ) 
            
       }
