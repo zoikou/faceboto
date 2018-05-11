@@ -11,6 +11,7 @@ import ImageLinkForm from './components/imageLinkForm/ImageLinkForm';
 import Rank from './components/rank/Rank';
 import SoundButton from './components/soundButton/SoundButton';
 import './App.css';
+import sound from './ambientLoop.mp3';
 
 //Using API from Clarifai.com
 const app = new Clarifai.App({
@@ -49,7 +50,7 @@ class App extends Component {
       route: 'signIn', //the App should start from the signIn page
       isSignedIn: false,
       playing: true,
-      playstatus:Sound.status.STOPPED,
+      playstatus:Sound.status.PLAYING,
       user: {
         id: '',
         name: '',
@@ -133,7 +134,7 @@ class App extends Component {
     if(playing === true){
       this.setState({playstatus: Sound.status.PLAYING})
     }else{
-      this.setState({playstatus: Sound.status.STOPPED})
+      this.setState({playstatus: Sound.status.PAUSED})
     }
   }
 
@@ -144,12 +145,13 @@ class App extends Component {
               params={particleOptions}
         />
         <Sound
-          url="http://100p100musique.free.fr/loops-synthe-wav/120%20space%20ping%20pong.wav"
+          //url="http://100p100musique.free.fr/loops-synthe-wav/120%20space%20ping%20pong.wav"
+          url = {sound}
           playStatus={this.state.playstatus}
           autoLoad= {true}
           autoPlay= {true}
           loop= {true}
-          volume= {20}
+          volume= {40}
         />
         <SignOut isSignedIn={this.state.isSignedIn} onRouteChange={this.onRouteChange}/>
         { this.state.route === 'home'
