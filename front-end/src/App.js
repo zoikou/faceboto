@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
+import Sound from 'react-sound';
 import Clarifai from 'clarifai';
 import SignOut from './components/signOut/SignOut';
 import SignIn from './components/signIn/SignIn';
@@ -8,12 +9,14 @@ import ImageDisplay from './components/imageDisplay/ImageDisplay';
 import Logo from './components/logo/Logo';
 import ImageLinkForm from './components/imageLinkForm/ImageLinkForm';
 import Rank from './components/rank/Rank';
+import SoundButton from './components/soundButton/SoundButton';
 import './App.css';
 
 //Using API from Clarifai.com
 const app = new Clarifai.App({
  apiKey: 'f4d2f05d61574857b6c27d92cefeb37c'
 });
+
 //Using Particles.js
 const particleOptions = {
   particles: {
@@ -45,6 +48,8 @@ class App extends Component {
       box: {}, // an object to keep the coordinates of the face in the image, starting from an empty state
       route: 'signIn', //the App should start from the signIn page
       isSignedIn: false,
+      playing: true,
+      playstatus:Sound.status.STOPPED,
       user: {
         id: '',
         name: '',
@@ -122,16 +127,35 @@ class App extends Component {
     }
     this.setState({route: route });
   }
+  handleSong = (playing)=>{
+    playing = !playing
+    this.setState({playing: playing});
+    if(playing === true){
+      this.setState({playstatus: Sound.status.PLAYING})
+    }else{
+      this.setState({playstatus: Sound.status.STOPPED})
+    }
+  }
+
   render() {
     return (
       <div className="App">
        <Particles className='particles'
               params={particleOptions}
         />
+        <Sound
+          url="http://100p100musique.free.fr/loops-synthe-wav/120%20space%20ping%20pong.wav"
+          playStatus={this.state.playstatus}
+          autoLoad= {true}
+          autoPlay= {true}
+          loop= {true}
+          volume= {20}
+        />
         <SignOut isSignedIn={this.state.isSignedIn} onRouteChange={this.onRouteChange}/>
         { this.state.route === 'home'
            ?<div>
                <Logo/>
+               <SoundButton handleSong={this.handleSong} playing={this.state.playing}/>
                <Rank name={this.state.user.name} entries={this.state.user.entries}/>
                <ImageLinkForm 
                   changeInputState={this.changeInputState} 
@@ -141,9 +165,9 @@ class App extends Component {
            :( this.state.route === 'signIn'
             ?<SignIn loadUser={this.loadUser} onRouteChange={this.onRouteChange}/>
             :<SignUp loadUser={this.loadUser} onRouteChange={this.onRouteChange}/>
-            ) 
-           
-      }
+            )      
+        }
+         
       </div>
     );
   }

@@ -6,7 +6,7 @@ const ImageLinkForm = ({changeInputState, onPictureSubmit})=>{
 	return (
 		<div>
            <p className='f3'>
-             {'Faceboto can detect faces in your pictures. Detect and make it smarter.'}
+             {'Faceboto can detect faces in your pictures. Make him smarter!'}
            </p>
            <div className='center'>
            <div className='form center pa4 br3 shadow-5'>
