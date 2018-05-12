@@ -2,7 +2,8 @@ const express = require ('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require('cors');
-const knex = require('knex')
+const knex = require('knex');
+const Clarifai = require('clarifai');
 
 const db = knex({
   client: 'pg',
@@ -14,21 +15,38 @@ const db = knex({
   }
 });
 
-const app = express();
-app.use(bodyParser.json());
-app.use(cors());
+const expressApp = express();
+expressApp.use(bodyParser.json());
+expressApp.use(cors());
+//Using API from Clarifai.com
+const app = new Clarifai.App({
+ apiKey: 'f4d2f05d61574857b6c27d92cefeb37c'
+});
 
-app.get ('/', (req, res)=>{
+expressApp.post('/imageurl',(req, res) =>{
+	app.models
+	.predict(Clarifai.FACE_DETECT_MODEL, req.body.input)
+	.then(data =>{
+		res.json(data);
+	})
+	.catch(err => res.status(400).json('unable to receive response from clarifai'))
+})
+
+expressApp.get ('/', (req, res)=>{
 	res.send(database.users);
 })
-app.post('/signin', (req, res)=>{
+expressApp.post('/signin', (req, res)=>{
+	const {email, password} = req.body;
+	if(!email || !password){
+		return res.status(400).json('incorrect form submission');
+	}
 	db.select('email', 'hash').from('login')
-	.where('email','=', req.body.email)
+	.where('email','=', email)
 	.then(data =>{
-		const validPassword= bcrypt.compareSync(req.body.password, data[0].hash);
+		const validPassword= bcrypt.compareSync(password, data[0].hash);
 		if(validPassword){
 			return db.select('*').from('users')
-			  .where('email', '=', req.body.email)
+			  .where('email', '=', email)
 			  .then(user =>{
 			  	res.json(user[0])
 			  })
@@ -40,8 +58,11 @@ app.post('/signin', (req, res)=>{
     .catch(err => res.status(400).json('wrong password or username'))
 })
 
-app.post('/signup', (req, res)=>{
+expressApp.post('/signup', (req, res)=>{
 	const {email, name, password} = req.body;
+	if(!email || !name || !password){
+		return res.status(400).json('incorrect form submission');
+	}
 	const hash = bcrypt.hashSync(password);
 	//more than two things than once
 	db.transaction(trx =>{
@@ -69,7 +90,7 @@ app.post('/signup', (req, res)=>{
 	.catch(err=> res.status(400).json('unable to sign Up'))
 })
 
-app.put('/image', (req,res)=>{
+expressApp.put('/image', (req,res)=>{
 	const{id} = req.body;
 	db('users').where('id', '=', id)
 	.increment('entries', 1)
@@ -80,8 +101,8 @@ app.put('/image', (req,res)=>{
 	.catch(err => res.status(400).json('unable to get entries'))
 })
 
-app.listen(3000, ()=>{
-	console.log('app is running on port 3000');
+expressApp.listen(3000, ()=>{
+	console.log('expressApp is running on port 3000');
 })
 
 
